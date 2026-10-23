@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>무인도 생존 로그라이크 - 교과 수업용</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        retroBg: '#0f172a',
+                        retroCard: '#1e293b',
+                        retroBorder: '#334155',
+                        accentGreen: '#10b981',
+                        accentBlue: '#3b82f6',
+                        accentAmber: '#f59e0b',
+                        accentRed: '#ef4444'
+                    },
+                    fontFamily: {
+                        sans: ['Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbar for game log */
+        #log-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        #log-container::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        #log-container::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 3px;
+        }
+        #log-container::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+        .pixel-border {
+            border: 2px solid #475569;
+            box-shadow: 4px 4px 0px #0f172a;
+        }
+    </style>
+</head>
+<body class="bg-retroBg text-slate-100 min-h-screen font-sans flex flex-col justify-between p-2 md:p-4 selection:bg-amber-500 selection:text-slate-900">
+
+    <!-- Header Section -->
+    <header class="max-w-4xl w-full mx-auto mb-3 bg-retroCard p-3 md:p-4 rounded-xl border border-retroBorder flex flex-wrap justify-between items-center gap-2 shadow-lg">
+        <div>
+            <h1 class="text-xl md:text-2xl font-bold text-amber-400 flex items-center gap-2">
+                🏝️ 무인도 생존 로그라이크 <span class="text-xs font-normal bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded border border-amber-500/30">수업용 v1.0</span>
+            </h1>
+            <p class="text-xs text-slate-400 mt-0.5">자원을 효율적으로 관리하고 최선의 선택으로 생존하세요!</p>
+        </div>
+        <div class="flex items-center gap-2 bg-slate-900/80 px-3 py-1.5 rounded-lg border border-slate-700">
+            <span class="text-xs text-slate-400">생존 기간:</span>
+            <span id="day-counter" class="text-lg font-bold text-emerald-400">Day 1</span>
+            <span id="time-badge" class="ml-1 text-xs px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">🌅 아침</span>
+        </div>
+    </header>
+
+    <!-- Main Game Container -->
+    <main class="max-w-4xl w-full mx-auto grid grid-cols-1 md:grid-cols-12 gap-4 flex-grow">
+        
+        <!-- Left Column: Status Bars & Inventory (5 Cols) -->
+        <section class="md:col-span-5 flex flex-col gap-3">
+            
+            <!-- Status Bars Card -->
+            <div class="bg-retroCard p-4 rounded-xl border border-retroBorder space-y-3 shadow-md">
+                <h2 class="text-sm font-semibold text-slate-300 border-b border-slate-700 pb-1.5 flex items-center justify-between">
+                    <span>📊 신체 및 환경 상태</span>
+                    <span class="text-xs font-normal text-slate-400">매 턴 자원 소모</span>
+                </h2>
+
+                <!-- Health -->
+                <div>
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-red-400 font-medium">❤️ 체력 (HP)</span>
+                        <span id="hp-text" class="text-slate-300 font-bold">100 / 100</span>
+                    </div>
+                    <div class="w-full bg-slate-900 h-3 rounded-full overflow-hidden border border-slate-700">
+                        <div id="hp-bar" class="bg-red-500 h-full transition-all duration-300" style="width: 100%"></div>
+                    </div>
+                </div>
+
+                <!-- Hunger -->
+                <div>
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-amber-400 font-medium">🍗 포만감</span>
+                        <span id="hunger-text" class="text-slate-300 font-bold">80 / 100</span>
+                    </div>
+                    <div class="w-full bg-slate-900 h-3 rounded-full overflow-hidden border border-slate-700">
+                        <div id="hunger-bar" class="bg-amber-500 h-full transition-all duration-300" style="width: 80%"></div>
+                    </div>
+                </div>
+
+                <!-- Hydration -->
+                <div>
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-blue-400 font-medium">💧 수분</span>
+                        <span id="thirst-text" class="text-slate-300 font-bold">80 / 100</span>
+                    </div>
+                    <div class="w-full bg-slate-900 h-3 rounded-full overflow-hidden border border-slate-700">
+                        <div id="thirst-bar" class="bg-blue-500 h-full transition-all duration-300" style="width: 80%"></div>
+                    </div>
+                </div>
+
+                <!-- Mental/Morale -->
+                <div>
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-purple-400 font-medium">🧠 정신력</span>
+                        <span id="mental-text" class="text-slate-300 font-bold">90 / 100</span>
+                    </div>
+                    <div class="w-full bg-slate-900 h-3 rounded-full overflow-hidden border border-slate-700">
+                        <div id="mental-bar" class="bg-purple-500 h-full transition-all duration-300" style="width: 90%"></div>
+                    </div>
+                </div>
+
+                <!-- Rescue Signal Progress -->
+                <div class="pt-2 border-t border-slate-700/60">
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-emerald-400 font-semibold">📡 구조 신호율 (SOS)</span>
+                        <span id="rescue-text" class="text-emerald-300 font-bold">0%</span>
+                    </div>
+                    <div class="w-full bg-slate-900 h-3.5 rounded-full overflow-hidden border border-emerald-900 p-0.5">
+                        <div id="rescue-bar" class="bg-gradient-to-r from-emerald-600 to-teal-400 h-full rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inventory & Shelter Status -->
+            <div class="bg-retroCard p-4 rounded-xl border border-retroBorder flex-grow shadow-md flex flex-col justify-between">
+                <div>
+                    <h2 class="text-sm font-semibold text-slate-300 border-b border-slate-700 pb-1.5 mb-2">
+                        🎒 소지품 및 시설
+                    </h2>
+                    <div id="inventory-list" class="grid grid-cols-2 gap-2 text-xs">
+                        <div class="bg-slate-900/60 p-2 rounded border border-slate-700/50 flex items-center justify-between">
+                            <span>🪵 목재</span>
+                            <span id="inv-wood" class="font-bold text-amber-300">0개</span>
+                        </div>
+                        <div class="bg-slate-900/60 p-2 rounded border border-slate-700/50 flex items-center justify-between">
+                            <span>🥥 야자열매</span>
+                            <span id="inv-food" class="font-bold text-amber-300">2개</span>
+                        </div>
+                        <div class="bg-slate-900/60 p-2 rounded border border-slate-700/50 flex items-center justify-between">
+                            <span>💧 깨끗한 물</span>
+                            <span id="inv-water" class="font-bold text-blue-300">2병</span>
+                        </div>
+                        <div class="bg-slate-900/60 p-2 rounded border border-slate-700/50 flex items-center justify-between">
+                            <span>🌿 약초</span>
+                            <span id="inv-herb" class="font-bold text-emerald-300">0개</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Built Facilities Indicators -->
+                <div class="mt-3 pt-3 border-t border-slate-700/60">
+                    <span class="text-xs text-slate-400 block mb-1.5">제작된 시설:</span>
+                    <div id="facilities-list" class="flex flex-wrap gap-1.5 text-xs">
+                        <span id="fac-shelter" class="px-2 py-0.5 rounded bg-slate-800 text-slate-500 border border-slate-700 opacity-60">🛖 은신처 미비</span>
+                        <span id="fac-fire" class="px-2 py-0.5 rounded bg-slate-800 text-slate-500 border border-slate-700 opacity-60">🔥 모닥불 없음</span>
+                        <span id="fac-collector" class="px-2 py-0.5 rounded bg-slate-800 text-slate-500 border border-slate-700 opacity-60">🪣 빗물모으기 없음</span>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Right Column: Visual Log & Action Buttons (7 Cols) -->
+        <section class="md:col-span-7 flex flex-col gap-3">
+            
+            <!-- Graphic Illustration Area -->
+            <div id="scene-graphic" class="bg-slate-900 rounded-xl border border-retroBorder p-4 text-center flex flex-col justify-center items-center h-32 relative overflow-hidden shadow-inner">
+                <div class="text-5xl mb-1 transition-transform duration-300 hover:scale-110 cursor-default" id="scene-icon">🏝️</div>
+                <div id="weather-indicator" class="text-xs text-amber-300 font-medium">현재 날씨: ☀️ 맑음 (평화로운 해변)</div>
+                <div class="absolute bottom-1 right-2 text-[10px] text-slate-500">무인도 중앙 해안가</div>
+            </div>
+
+            <!-- Game Log Output -->
+            <div id="log-container" class="bg-slate-950 p-4 rounded-xl border border-retroBorder flex-grow h-52 md:h-60 overflow-y-auto font-mono text-xs md:text-sm space-y-2 shadow-inner">
+                <div class="text-emerald-400">System: 🌊 비행기 불시착 후 정신을 차려보니 무인도 해변가입니다.</div>
+                <div class="text-slate-300">구조대가 오기까지 살아남거나 스스로 탈출할 방법을 찾아야 합니다!</div>
+                <div class="text-amber-300/80">💡 [수업 팁] 매 턴 자원 소모를 계산하고 우선순위를 결정하세요.</div>
+            </div>
+
+            <!-- Action Controls Area -->
+            <div class="bg-retroCard p-3 md:p-4 rounded-xl border border-retroBorder shadow-md">
+                <div class="text-xs text-slate-400 mb-2 font-medium flex justify-between items-center">
+                    <span>🎮 이번 턴에 수행할 행동 선택:</span>
+                    <span id="actions-left" class="text-amber-400 font-bold">행동 가능</span>
+                </div>
+                
+                <!-- Action Buttons Grid -->
+                <div class="grid grid-cols-2 gap-2" id="action-buttons">
+                    <button onclick="handleAction('explore')" class="bg-emerald-700 hover:bg-emerald-600 active:bg-emerald-800 text-white p-2.5 rounded-lg text-xs md:text-sm font-semibold transition border border-emerald-500/30 flex items-center justify-center gap-1.5 shadow">
+                        🔍 섬 탐험하기
+                    </button>
+                    <button onclick="handleAction('craft')" class="bg-amber-700 hover:bg-amber-600 active:bg-amber-800 text-white p-2.5 rounded-lg text-xs md:text-sm font-semibold transition border border-amber-500/30 flex items-center justify-center gap-1.5 shadow">
+                        🔨 시설/도구 제작
+                    </button>
+                    <button onclick="handleAction('rest')" class="bg-blue-700 hover:bg-blue-600 active:bg-blue-800 text-white p-2.5 rounded-lg text-xs md:text-sm font-semibold transition border border-blue-500/30 flex items-center justify-center gap-1.5 shadow">
+                        💤 휴식 & 식사
+                    </button>
+                    <button onclick="handleAction('sos')" class="bg-purple-700 hover:bg-purple-600 active:bg-purple-800 text-white p-2.5 rounded-lg text-xs md:text-sm font-semibold transition border border-purple-500/30 flex items-center justify-center gap-1.5 shadow">
+                        📡 SOS 신호/탈출
+                    </button>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- Sub-Modal for Crafting Choices -->
+    <div id="craft-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden flex justify-center items-center p-4 z-40">
+        <div class="bg-retroCard border border-retroBorder p-5 rounded-xl max-w-md w-full shadow-2xl">
+            <h3 class="text-base font-bold text-amber-400 border-b border-slate-700 pb-2 mb-3 flex justify-between items-center">
+                <span>🔨 제작 및 건설</span>
+                <button onclick="closeModal('craft-modal')" class="text-slate-400 hover:text-white text-sm">✕ 닫기</button>
+            </h3>
+            <div class="space-y-2 text-xs">
+                <div class="p-2.5 bg-slate-900 rounded border border-slate-700 flex justify-between items-center">
+                    <div>
+                        <div class="font-bold text-slate-200">🛖 기본 은신처 (목재 3 필요)</div>
+                        <div class="text-slate-400 text-[11px]">밤 체력 저하 방지 & 정신력 회복</div>
+                    </div>
+                    <button onclick="buildFacility('shelter')" class="bg-amber-600 hover:bg-amber-500 px-3 py-1.5 rounded font-bold text-white">제작</button>
+                </div>
+
+                <div class="p-2.5 bg-slate-900 rounded border border-slate-700 flex justify-between items-center">
+                    <div>
+                        <div class="font-bold text-slate-200">🔥 모닥불 (목재 2 필요)</div>
+                        <div class="text-slate-400 text-[11px]">야생동물 습격 방지 & 체온 유지</div>
+                    </div>
+                    <button onclick="buildFacility('fire')" class="bg-amber-600 hover:bg-amber-500 px-3 py-1.5 rounded font-bold text-white">제작</button>
+                </div>
+
+                <div class="p-2.5 bg-slate-900 rounded border border-slate-700 flex justify-between items-center">
+                    <div>
+                        <div class="font-bold text-slate-200">🪣 빗물 수집기 (목재 2 필요)</div>
+                        <div class="text-slate-400 text-[11px]">비가 올 때 깨끗한 물 자동 수집</div>
+                    </div>
+                    <button onclick="buildFacility('collector')" class="bg-amber-600 hover:bg-amber-500 px-3 py-1.5 rounded font-bold text-white">제작</button>
+                </div>
+
+                <div class="p-2.5 bg-slate-900 rounded border border-slate-700 flex justify-between items-center">
+                    <div>
+                        <div class="font-bold text-slate-200">⛵ 탈출용 뗏목 (목재 8 필요)</div>
+                        <div class="text-slate-400 text-[11px]">스스로 섬을 탈출하는 조건</div>
+                    </div>
+                    <button onclick="buildFacility('raft')" class="bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 rounded font-bold text-white">제작</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Event Decision Modal -->
+    <div id="event-modal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-sm hidden flex justify-center items-center p-4 z-50">
+        <div class="bg-retroCard border-2 border-amber-500/50 p-5 rounded-xl max-w-md w-full shadow-2xl">
+            <div id="event-icon" class="text-4xl text-center mb-2">🐺</div>
+            <h3 id="event-title" class="text-lg font-bold text-center text-amber-400 mb-2">돌발 상황 발생!</h3>
+            <p id="event-desc" class="text-xs md:text-sm text-slate-300 bg-slate-900/80 p-3 rounded-lg border border-slate-700 mb-4 leading-relaxed">
+                이벤트 설명 텍스트
+            </p>
+            <div id="event-options" class="space-y-2">
+                <!-- Dynamic Choice Buttons -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Educational Debriefing & End Game Modal -->
+    <div id="ending-modal" class="fixed inset-0 bg-slate-950/95 backdrop-blur-md hidden flex justify-center items-center p-4 z-50">
+        <div class="bg-retroCard border-2 border-emerald-500 p-6 rounded-xl max-w-lg w-full shadow-2xl text-center max-h-[90vh] overflow-y-auto">
+            <div id="ending-badge" class="text-5xl mb-2">🎉</div>
+            <h2 id="ending-title" class="text-2xl font-extrabold text-emerald-400 mb-1">무인도 구조 성공!</h2>
+            <p id="ending-sub" class="text-xs text-slate-400 mb-4">선생님 및 학급 친구들과 결과를 공유해보세요.</p>
+
+            <!-- Stats Summary Box -->
+            <div class="bg-slate-900 p-3 rounded-lg border border-slate-700 text-left text-xs space-y-1 mb-4">
+                <div class="flex justify-between"><span class="text-slate-400">총 버틴 기간:</span><span id="final-days" class="font-bold text-amber-300">0일</span></div>
+                <div class="flex justify-between"><span class="text-slate-400">구조 신호율:</span><span id="final-signal" class="font-bold text-emerald-300">0%</span></div>
+                <div class="flex justify-between"><span class="text-slate-400">최종 엔딩 유형:</span><span id="final-type" class="font-bold text-blue-300">-</span></div>
+            </div>
+
+            <!-- Class Discussion & Reflection Questions -->
+            <div class="bg-amber-950/30 border border-amber-500/30 p-4 rounded-lg text-left mb-5">
+                <h3 class="text-xs font-bold text-amber-400 mb-2 flex items-center gap-1">
+                    <span>💡 생각해보기 (학급 성찰 토론 질문)</span>
+                </h3>
+                <ul class="text-[11px] text-slate-300 space-y-1.5 list-disc list-inside">
+                    <li>한정된 자원(포만감, 수분) 속에서 가장 먼저 고려한 생존 우선순위는 무엇이었나요?</li>
+                    <li>불확실한 돌발 상황(예: 야생동물, 이상 기후)에서 어떤 합리적 선택을 했나요?</li>
+                    <li>스스로 뗏목을 만들어 탈출하는 것과 SOS 신호를 보내는 것 중 어느 전략이 더 효율적이었나요?</li>
+                </ul>
+            </div>
+
+            <button onclick="location.reload()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-lg text-sm transition shadow-lg">
+                🔄 게임 다시 시작하기
+            </button>
+        </div>
+    </div>
+
+    <!-- Game Logic Script -->
+    <script>
+        // Game State Variables
+        const gameState = {
+            day: 1,
+            turnIndex: 0, // 0: Morning, 1: Afternoon, 2: Night
+            turnsNames: ['🌅 아침', '☀️ 낮', '🌙 밤'],
+            hp: 100,
+            hunger: 80,
+            thirst: 80,
+            mental: 90,
+            rescueSignal: 0,
+            weather: 'clear', // 'clear', 'rain', 'heatwave'
+            
+            // Inventory
+            wood: 0,
+            food: 2,
+            water: 2,
+            herb: 0,
+
+            // Built Facilities
+            shelter: false,
+            fire: false,
+            collector: false,
+            raft: false,
+
+            isGameOver: false
+        };
+
+        // Initialize Game
+        window.onload = function() {
+            updateUI();
+            addLog("게임이 시작되었습니다. 하루에 3번의 행동을 선택할 수 있습니다.", "text-emerald-400");
+        };
+
+        // UI Refresh Helper
+        function updateUI() {
+            document.getElementById('day-counter').innerText = `Day ${gameState.day}`;
+            document.getElementById('time-badge').innerText = gameState.turnsNames[gameState.turnIndex];
+
+            // Bars
+            updateBar('hp', gameState.hp);
+            updateBar('hunger', gameState.hunger);
+            updateBar('thirst', gameState.thirst);
+            updateBar('mental', gameState.mental);
+            
+            // Rescue Signal
+            document.getElementById('rescue-text').innerText = `${gameState.rescueSignal}%`;
+            document.getElementById('rescue-bar').style.width = `${gameState.rescueSignal}%`;
+
+            // Inventory
+            document.getElementById('inv-wood').innerText = `${gameState.wood}개`;
+            document.getElementById('inv-food').innerText = `${gameState.food}개`;
+            document.getElementById('inv-water').innerText = `${gameState.water}병`;
+            document.getElementById('inv-herb').innerText = `${gameState.herb}개`;
+
+            // Facilities
+            toggleFacilityBadge('fac-shelter', gameState.shelter, '🛖 은신처 완공');
+            toggleFacilityBadge('fac-fire', gameState.fire, '🔥 모닥불 완공');
+            toggleFacilityBadge('fac-collector', gameState.collector, '🪣 빗물수집기 설치');
+
+            // Scene Visuals
+            updateSceneGraphic();
+        }
+
+        function updateBar(id, value) {
+            value = Math.max(0, Math.min(100, value));
+            document.getElementById(`${id}-text`).innerText = `${value} / 100`;
+            document.getElementById(`${id}-bar`).style.width = `${value}%`;
+        }
+
+        function toggleFacilityBadge(id, isBuilt, label) {
+            const el = document.getElementById(id);
+            if (isBuilt) {
+                el.innerText = label;
+                el.className = "px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/50 font-medium";
+            }
+        }
+
+        function updateSceneGraphic() {
+            const iconEl = document.getElementById('scene-icon');
+            const weatherEl = document.getElementById('weather-indicator');
+
+            if (gameState.weather === 'rain') {
+                iconEl.innerText = '🌧️';
+                weatherEl.innerText = '현재 날씨: 🌧️ 스콜 폭우 (수분 채집 수월, 은신처 필요)';
+            } else if (gameState.weather === 'heatwave') {
+                iconEl.innerText = '☀️';
+                weatherEl.innerText = '현재 날씨: 🏜️ 강렬한 폭염 (수분 소모 속도 2배)';
+            } else {
+                iconEl.innerText = gameState.turnIndex === 2 ? '🌙' : '🏝️';
+                weatherEl.innerText = gameState.turnIndex === 2 ? '현재 날씨: 🌌 시원한 밤하늘' : '현재 날씨: ☀️ 맑음 (평화로운 해변)';
+            }
+        }
+
+        function addLog(msg, colorClass = "text-slate-200") {
+            const logBox = document.getElementById('log-container');
+            const newEntry = document.createElement('div');
+            newEntry.className = colorClass;
+            newEntry.innerText = `[Day ${gameState.day} ${gameState.turnsNames[gameState.turnIndex]}] ${msg}`;
+            logBox.appendChild(newEntry);
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        // Action Handlers
+        function handleAction(type) {
+            if (gameState.isGameOver) return;
+
+            switch(type) {
+                case 'explore':
+                    executeExplore();
+                    break;
+                case 'craft':
+                    openCraftModal();
+                    return; // Modal handles turn passing
+                case 'rest':
+                    executeRest();
+                    break;
+                case 'sos':
+                    executeSOS();
+                    break;
+            }
+
+            advanceTurn();
+        }
+
+        // Action Logic: Explore
+        function executeExplore() {
+            const rand = Math.random();
+            if (rand < 0.35) {
+                // Find Wood & Supplies
+                const foundWood = Math.floor(Math.random() * 2) + 1;
+                const foundFood = Math.floor(Math.random() * 2);
+                gameState.wood += foundWood;
+                gameState.food += foundFood;
+                addLog(`🔍 숲을 탐험하여 목재 ${foundWood}개와 야자열매 ${foundFood}개를 발견했습니다!`, "text-amber-300");
+            } else if (rand < 0.6) {
+                // Find Fresh Water / Herb
+                gameState.water += 1;
+                if (Math.random() > 0.5) gameState.herb += 1;
+                addLog(`💧 계곡을 발견하여 깨끗한 물 1병을 구했습니다.`, "text-blue-300");
+            } else if (rand < 0.85) {
+                // Trigger Event Encounter
+                triggerRandomEvent();
+                return; // Event modal will advance turn upon resolution
+            } else {
+                addLog(`🔍 섬을 헛되이 맴돌았으나 특별한 물자를 찾지 못했습니다.`, "text-slate-400");
+            }
+
+            // Stat drain for exploration
+            gameState.hunger -= 10;
+            gameState.thirst -= (gameState.weather === 'heatwave' ? 20 : 12);
+        }
+
+        // Action Logic: Rest & Eat
+        function executeRest() {
+            let logMsg = "💤 휴식을 취했습니다.";
+            
+            // Auto Consume Food if available
+            if (gameState.food > 0) {
+                gameState.food--;
+                gameState.hunger = Math.min(100, gameState.hunger + 30);
+                logMsg += " 🥥 야자열매를 먹어 포만감을 회복했습니다.";
+            } else {
+                logMsg += " (식량이 부족합니다!)";
+            }
+
+            // Auto Consume Water if available
+            if (gameState.water > 0) {
+                gameState.water--;
+                gameState.thirst = Math.min(100, gameState.thirst + 35);
+                logMsg += " 💧 물을 마셔 수분을 충전했습니다.";
+            } else {
+                logMsg += " (물이 부족합니다!)";
+            }
+
+            gameState.hp = Math.min(100, gameState.hp + 10);
+            gameState.mental = Math.min(100, gameState.mental + 15);
+            
+            addLog(logMsg, "text-emerald-300");
+        }
+
+        // Action Logic: SOS Signal
+        function executeSOS() {
+            if (gameState.raft) {
+                // Escape Victory!
+                triggerEnding('raft');
+                return;
+            }
+
+            const gain = Math.floor(Math.random() * 15) + 10;
+            gameState.rescueSignal = Math.min(100, gameState.rescueSignal + gain);
+            gameState.hunger -= 10;
+            gameState.thirst -= 10;
+
+            addLog(`📡 해변에 연기를 피우고 구조 신호를 보냈습니다! (신호율 +${gain}%)`, "text-purple-300");
+
+            if (gameState.rescueSignal >= 100) {
+                triggerEnding('rescue');
+            }
+        }
+
+        // Modal Controls
+        function openCraftModal() {
+            document.getElementById('craft-modal').classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function buildFacility(facility) {
+            if (facility === 'shelter') {
+                if (gameState.wood >= 3) {
+                    gameState.wood -= 3;
+                    gameState.shelter = true;
+                    addLog("🛖 기본 은신처를 완공했습니다! 야간 체력 저하를 막아줍니다.", "text-amber-400");
+                    closeModal('craft-modal');
+                    advanceTurn();
+                } else {
+                    alert("목재가 부족합니다! (필요: 목재 3개)");
+                }
+            } else if (facility === 'fire') {
+                if (gameState.wood >= 2) {
+                    gameState.wood -= 2;
+                    gameState.fire = true;
+                    addLog("🔥 모닥불을 피웠습니다. 야생동물의 접근을 막습니다.", "text-amber-400");
+                    closeModal('craft-modal');
+                    advanceTurn();
+                } else {
+                    alert("목재가 부족합니다! (필요: 목재 2개)");
+                }
+            } else if (facility === 'collector') {
+                if (gameState.wood >= 2) {
+                    gameState.wood -= 2;
+                    gameState.collector = true;
+                    addLog("🪣 빗물 수집기를 설치했습니다. 비가 올 때 물을 얻습니다.", "text-amber-400");
+                    closeModal('craft-modal');
+                    advanceTurn();
+                } else {
+                    alert("목재가 부족합니다! (필요: 목재 2개)");
+                }
+            } else if (facility === 'raft') {
+                if (gameState.wood >= 8) {
+                    gameState.wood -= 8;
+                    gameState.raft = true;
+                    addLog("⛵ 탈출용 뗏목을 건조했습니다! 'SOS/탈출' 버튼으로 섬을 탈출하세요!", "text-emerald-400");
+                    closeModal('craft-modal');
+                    advanceTurn();
+                } else {
+                    alert("목재가 부족합니다! (필요: 목재 8개)");
+                }
+            }
+        }
+
+        // Random Event Triggering
+        function triggerRandomEvent() {
+            const events = [
+                {
+                    icon: '🐺',
+                    title: '야생 늑대와의 조우!',
+                    desc: '숲속에서 기습적으로 야생 늑대가 나타났습니다! 모닥불이 있거나 식량으로 유인할 수 있습니다.',
+                    options: [
+                        { text: '⚔️ 맞서 싸운다 (체력 소모 위험)', action: () => {
+                            gameState.hp -= 20;
+                            gameState.mental -= 10;
+                            addLog("🐺 늑대와 맞서 싸워 쫓아냈으나 상처를 입었습니다. (HP -20)", "text-red-400");
+                        }},
+                        { text: '🥥 식량을 던져주고 도망친다 (식량 -1)', action: () => {
+                            if (gameState.food > 0) {
+                                gameState.food--;
+                                addLog("🐺 식량을 던져주어 늑대의 주의를 돌리고 무사히 피했습니다.", "text-amber-300");
+                            } else {
+                                gameState.hp -= 30;
+                                addLog("🐺 던져줄 식량이 없어 늑대에게 물렸습니다! (HP -30)", "text-red-400");
+                            }
+                        }}
+                    ]
+                },
+                {
+                    icon: '📦',
+                    title: '표류된 구호 상자 발견!',
+                    desc: '해안가 파도에 휩쓸려온 비행기 화물 상자를 발견했습니다.',
+                    options: [
+                        { text: '🔓 상자를 강제로 열어본다', action: () => {
+                            gameState.food += 2;
+                            gameState.water += 2;
+                            addLog("📦 상자 안에서 보존식량과 생수를 확보했습니다!", "text-emerald-300");
+                        }}
+                    ]
+                }
+            ];
+
+            const ev = events[Math.floor(Math.random() * events.length)];
+            document.getElementById('event-icon').innerText = ev.icon;
+            document.getElementById('event-title').innerText = ev.title;
+            document.getElementById('event-desc').innerText = ev.desc;
+
+            const optContainer = document.getElementById('event-options');
+            optContainer.innerHTML = '';
+            
+            ev.options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = "w-full bg-slate-800 hover:bg-slate-700 text-slate-100 p-2.5 rounded text-xs font-medium border border-slate-600 transition text-left";
+                btn.innerText = opt.text;
+                btn.onclick = () => {
+                    opt.action();
+                    closeModal('event-modal');
+                    advanceTurn();
+                };
+                optContainer.appendChild(btn);
+            });
+
+            document.getElementById('event-modal').classList.remove('hidden');
+        }
+
+        // Advance Turn & Day Logic
+        function advanceTurn() {
+            if (gameState.isGameOver) return;
+
+            gameState.turnIndex++;
+            
+            // End of Night -> Next Day
+            if (gameState.turnIndex > 2) {
+                gameState.turnIndex = 0;
+                gameState.day++;
+                
+                // Weather Change Roll
+                const wRand = Math.random();
+                if (wRand < 0.25) gameState.weather = 'rain';
+                else if (wRand < 0.45) gameState.weather = 'heatwave';
+                else gameState.weather = 'clear';
+
+                // Rain Water Collection Check
+                if (gameState.weather === 'rain' && gameState.collector) {
+                    gameState.water += 2;
+                    addLog("🌧️ 밤새 내린 비가 빗물 수집기에 받아졌습니다 (+2병).", "text-blue-300");
+                }
+
+                // Shelter Check during Night
+                if (!gameState.shelter) {
+                    gameState.hp -= 10;
+                    gameState.mental -= 5;
+                    addLog("🥶 은신처가 없어 이슬을 맞고 자 체력과 정신력이 감소했습니다.", "text-red-400");
+                }
+            }
+
+            // Natural passive stat drain per turn
+            gameState.hunger -= 5;
+            gameState.thirst -= 6;
+
+            // Health Penalty if Hungry/Thirsty
+            if (gameState.hunger <= 0) {
+                gameState.hp -= 10;
+                addLog("⚠️ 극심한 허기로 체력이 감소하고 있습니다!", "text-red-400");
+            }
+            if (gameState.thirst <= 0) {
+                gameState.hp -= 15;
+                addLog("⚠️ 탈수 증상으로 체력이 빠르게 감소합니다!", "text-red-400");
+            }
+
+            // Check Game Over Conditions
+            if (gameState.hp <= 0 || gameState.mental <= 0) {
+                triggerEnding('death');
+                return;
+            }
+
+            updateUI();
+        }
+
+        // Trigger Game Ending
+        function triggerEnding(type) {
+            gameState.isGameOver = true;
+            updateUI();
+
+            const modal = document.getElementById('ending-modal');
+            const badge = document.getElementById('ending-badge');
+            const title = document.getElementById('ending-title');
+            const sub = document.getElementById('ending-sub');
+
+            document.getElementById('final-days').innerText = `${gameState.day}일차`;
+            document.getElementById('final-signal').innerText = `${gameState.rescueSignal}%`;
+
+            if (type === 'rescue') {
+                badge.innerText = '🚁';
+                title.innerText = '구조 성공! (SOS 연기 신호)';
+                title.className = 'text-2xl font-extrabold text-emerald-400 mb-1';
+                sub.innerText = '해양경찰 구조대가 신호를 포착하고 무사히 구조했습니다!';
+                document.getElementById('final-type').innerText = '구조대 도착 엔딩';
+            } else if (type === 'raft') {
+                badge.innerText = '⛵';
+                title.innerText = '스스로 탈출 성공! (뗏목 건조)';
+                title.className = 'text-2xl font-extrabold text-blue-400 mb-1';
+                sub.innerText = '직접 만든 뗏목을 타고 항해하여 지나가던 상선에 구조되었습니다!';
+                document.getElementById('final-type').innerText = '뗏목 직접 탈출 엔딩';
+            } else {
+                badge.innerText = '💀';
+                title.innerText = '생존 실패 (탈진/고립)';
+                title.className = 'text-2xl font-extrabold text-red-400 mb-1';
+                sub.innerText = '체력 또는 정신력이 바닥나 무인도에서 쓰러졌습니다.';
+                document.getElementById('final-type').innerText = '탈진 엔딩';
+            }
+
+            modal.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
